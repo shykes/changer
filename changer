@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+import sys
+import subprocess
+import json
+import hashlib
+
+def docker(args, stdin=None):
+	print "... docker " + " ".join(args)
+	p = subprocess.Popen(["docker"] + list(args), stdin=stdin, stdout=subprocess.PIPE)
+	return p.stdout
+
+def getId(name):
+	return json.loads(docker(["inspect", name]).read())["Id"].split(":", 1)[1]
+
+
+def image_exists(img):
+	result = subprocess.Popen("     docker images -q | grep '{}' | head -n 1".format(img), shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+	return result != ""
+
+def last():
+	return subprocess.Popen("docker ps -a -q | head -n 1", shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
+
+def run_and_commit(img_in, cmd, img_out, stdin=None):
+	if stdin != None:
+		run_output = docker(["run", "-t", "-a", "-i", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
+	else:
+		run_output = docker(["run", "-t", "-a", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd])
+	for line in run_output.readlines():
+		print "--> " + line.rstrip()
+	commit_output = docker(["commit", last(), img_out])
+	return commit_output.read().rstrip()
+
+def changeHash(cmd, stdin):
+	return hashlib.sha256("{}{}{}".format(len(cmd), cmd, stdin.read() if stdin != None else "")).hexdigest()
+	
+
+def main():
+	if len(sys.argv) > 1:
+		print docker(sys.argv[1:]).read()
+		return
+	base=""
+	for line in sys.stdin.readlines():
+		line = line.strip()
+		if line == "" or line[0] == "#":
+			continue
+		op, param = line.split("	", 1)
+		if op == "from":
+			print "FROM " + param
+			base = param
+			if not image_exists(base):
+				raise Exception("No such image: " + base)
+		elif op == "run":
+			print "RUN " + param
+			destpath = "_/changes/{}/{}".format(getId(base), changeHash(param, None))
+			if not image_exists(destpath):
+				print "Cache miss"
+				result = run_and_commit(base, param, destpath)
+			else:
+				print "Cache hit"
+				result = destpath
+			base = result
+			print "new base: " + base
+		else:
+			print "Skipping uknown op " + op
+
+if __name__ == "__main__":
+	main()
