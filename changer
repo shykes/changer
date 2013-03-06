@@ -22,9 +22,9 @@ def last():
 
 def run_and_commit(img_in, cmd, img_out, stdin=None):
 	if stdin != None:
-		run_output = docker(["run", "-t", "-a", "-i", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
+		run_output = docker(["run", "-a", "-i", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
 	else:
-		run_output = docker(["run", "-t", "-a", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd])
+		run_output = docker(["run", "-a", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd])
 	for line in run_output.readlines():
 		print "--> " + line.rstrip()
 	commit_output = docker(["commit", last(), img_out])
