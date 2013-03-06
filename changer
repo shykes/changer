@@ -60,6 +60,23 @@ def main():
 				result = destpath
 			base = result
 			print "new base: " + base
+		elif op == "copy":
+			src, dst = param.split("	", 1)
+			print "COPY {} to {}".format(src, dst)
+			if dst == "":
+				stdin = None
+			else:
+				stdin = file(src)
+			cmd = "cat > {0}; chmod +x {0}".format(dst)
+			destpath = "_/changes/{}/{}".format(getId(base), changeHash(param, stdin))
+			if not image_exists(destpath):
+				print "Cache miss"
+				result = run_and_commit(base, cmd, destpath, stdin=stdin)
+			else:
+				print "Cache hit"
+				result = destpath
+			base = result
+			print "new base: " + base
 		else:
 			print "Skipping uknown op " + op
 
