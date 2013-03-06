@@ -6,7 +6,6 @@ import json
 import hashlib
 
 def docker(args, stdin=None):
-	print "... docker " + " ".join(args)
 	p = subprocess.Popen(["docker"] + list(args), stdin=stdin, stdout=subprocess.PIPE)
 	return p.stdout
 
