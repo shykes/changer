@@ -21,10 +21,7 @@ def last():
 	return subprocess.Popen("docker ps -a -q | head -n 1", shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 
 def run_and_commit(img_in, cmd, img_out, stdin=None):
-	if stdin != None:
-		run_output = docker(["run", "-a", "-i", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
-	else:
-		run_output = docker(["run", "-a", img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd])
+	run_output = docker(["run", "-a"] + (["-i"] if stdin else []) + [img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
 	for line in run_output.readlines():
 		print "--> " + line.rstrip()
 	commit_output = docker(["commit", last(), img_out])
@@ -63,12 +60,11 @@ def main():
 		elif op == "copy":
 			src, dst = param.split("	", 1)
 			print "COPY {} to {}".format(src, dst)
-			if dst == "":
-				stdin = None
-			else:
-				stdin = file(src)
+			stdin = file(src) if dst != "" else None
+			print "stdin = " + str(stdin)
 			cmd = "cat > {0}; chmod +x {0}".format(dst)
 			destpath = "_/changes/{}/{}".format(getId(base), changeHash(param, stdin))
+			stdin.seek(0)
 			if not image_exists(destpath):
 				print "Cache miss"
 				result = run_and_commit(base, cmd, destpath, stdin=stdin)
