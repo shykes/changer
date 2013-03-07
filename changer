@@ -28,14 +28,17 @@ def run_and_commit(img_in, cmd, img_out, stdin=None):
 	commit_output = docker(["commit", last(), img_out])
 	return commit_output.read().rstrip()
 
+def copy(src, dst):
+	copy_job = docker(["run", src, "/bin/sh", "-c", "touch /tmp/$RANDOM"]).read().rstrip()
+	docker(["wait", copy_job])
+	return docker(["commit", copy_job, dst]).read().rstrip()
+
 def changeHash(cmd, stdin):
 	return hashlib.sha256("{}{}{}".format(len(cmd), cmd, stdin.read() if stdin != None else "")).hexdigest()
 	
 
 def main():
-	if len(sys.argv) > 1:
-		print docker(sys.argv[1:]).read()
-		return
+	dest = sys.argv[1]
 	base=""
 	for line in sys.stdin.readlines():
 		line = line.strip()
@@ -76,6 +79,7 @@ def main():
 			print "===> " + base
 		else:
 			print "Skipping uknown op " + op
+	print copy(base, dest)
 
 if __name__ == "__main__":
 	main()
