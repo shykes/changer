@@ -6,6 +6,7 @@ import json
 import hashlib
 
 def docker(args, stdin=None):
+	print "# docker " + " ".join(args)
 	p = subprocess.Popen(["docker"] + list(args), stdin=stdin, stdout=subprocess.PIPE)
 	return p.stdout
 
@@ -56,7 +57,7 @@ def main():
 				print "Cache hit"
 				result = destpath
 			base = result
-			print "new base: " + base
+			print "===> " + base
 		elif op == "copy":
 			src, dst = param.split("	", 1)
 			print "COPY {} to {}".format(src, dst)
@@ -72,7 +73,7 @@ def main():
 				print "Cache hit"
 				result = destpath
 			base = result
-			print "new base: " + base
+			print "===> " + base
 		else:
 			print "Skipping uknown op " + op
 
