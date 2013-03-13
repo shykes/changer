@@ -11,7 +11,7 @@ def docker(args, stdin=None):
 	return p.stdout
 
 def getId(name):
-	return json.loads(docker(["inspect", name]).read())["Id"].split(":", 1)[1]
+	return json.loads(docker(["inspect", name]).read())["Id"]
 
 
 def image_exists(img):
