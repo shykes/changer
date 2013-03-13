@@ -15,8 +15,7 @@ def getId(name):
 
 
 def image_exists(img):
-	result = subprocess.Popen("     docker images -q | grep '{}' | head -n 1".format(img), shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
-	return result != ""
+	return docker(["inspect", img]).read().strip() != ""
 
 def last():
 	return subprocess.Popen("docker ps -a -q | head -n 1", shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
