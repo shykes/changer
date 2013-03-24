@@ -11,7 +11,7 @@ def docker(args, stdin=None):
 	return p.stdout
 
 def getId(name):
-	return json.loads(docker(["inspect", name]).read())["Id"]
+	return json.loads(docker(["inspect", name]).read())["id"]
 
 
 def image_exists(img):
@@ -21,14 +21,14 @@ def last():
 	return subprocess.Popen("docker ps -a -q | head -n 1", shell=True, stdout=subprocess.PIPE).communicate()[0].strip()
 
 def run_and_commit(img_in, cmd, img_out, stdin=None):
-	run_output = docker(["run", "-a"] + (["-i"] if stdin else []) + [img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
+	run_output = docker(["run"] + (["-i"] if stdin else []) + [img_in, "/bin/sh", "-c", "touch /tmp/$RANDOM; " + cmd], stdin=stdin)
 	for line in run_output.readlines():
 		print "--> " + line.rstrip()
 	commit_output = docker(["commit", last(), img_out])
 	return commit_output.read().rstrip()
 
 def copy(src, dst):
-	copy_job = docker(["run", src, "/bin/sh", "-c", "touch /tmp/$RANDOM"]).read().rstrip()
+	copy_job = docker(["run", "-d", src, "/bin/sh", "-c", "touch /tmp/$RANDOM"]).read().rstrip()
 	docker(["wait", copy_job])
 	return docker(["commit", copy_job, dst]).read().rstrip()
 
